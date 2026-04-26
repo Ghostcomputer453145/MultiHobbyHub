@@ -23,28 +23,74 @@ function App() {
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
+          gap: "20px",
         }}
       >
-        <h1 style={{
-          color: "gold",
-          fontSize: "64px",
-          fontWeight: "bold",
-          textShadow: "3px 3px 0 black"
-        }}>
+        <h1
+          style={{
+            color: "gold",
+            fontSize: "72px",
+            fontWeight: "bold",
+            textShadow: "4px 4px 0 black",
+            marginBottom: "10px",
+          }}
+        >
           HobbyHub
         </h1>
 
-        <select onChange={(e) => setSelectedTheme(e.target.value)}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <p
+            style={{
+              color: "gold",
+              fontSize: "22px",
+              fontWeight: "bold",
+              textShadow: "2px 2px 0 black",
+            }}
+          >
+            Name: Yumin Jang
+          </p>
+
+          <p
+            style={{
+              color: "gold",
+              fontSize: "22px",
+              fontWeight: "bold",
+              textShadow: "2px 2px 0 black",
+            }}
+          >
+            Z Number: Z23655899
+          </p>
+        </div>
+
+        <select
+          style={{
+            padding: "10px",
+            fontSize: "16px",
+            borderRadius: "6px",
+            marginBottom: "10px",
+          }}
+          onChange={(e) => setSelectedTheme(e.target.value)}
+        >
           <option>Select a Hobby</option>
           {Object.keys(themes).map((key) => (
-            <option key={key} value={key}>{key}</option>
+            <option key={key} value={key}>
+              {key}
+            </option>
           ))}
         </select>
 
-        <br /><br />
-
         <a href="/auth">
-          <button>Login / Signup</button>
+          <button style={{ padding: "10px 20px", fontSize: "16px" }}>
+            Login / Signup
+          </button>
         </a>
       </div>
     );

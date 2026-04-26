@@ -6,6 +6,7 @@ import CommentSection from "../components/CommentSection";
 export default function PostPage() {
     const { id } = useParams();
     const [post, setPost] = useState(null);
+    const [summary, setSummary] = useState("");
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -13,7 +14,12 @@ export default function PostPage() {
     }, []);
 
     const fetchPost = async () => {
-        const { data } = await supabase.from("posts").select("*").eq("id", id).single();
+        const { data } = await supabase
+            .from("posts")
+            .select("*")
+            .eq("id", id)
+            .single();
+
         setPost(data);
     };
 
@@ -31,17 +37,63 @@ export default function PostPage() {
         navigate("/");
     };
 
+    const generateSummary = async () => {
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer YOUR_OPENAI_KEY"
+            },
+            body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: [
+                    {
+                        role: "user",
+                        content: `Summarize this post: ${post.content}`
+                    }
+                ]
+            })
+        });
+
+        const data = await res.json();
+        setSummary(data.choices[0].message.content);
+    };
+
     if (!post) return <p>Loading...</p>;
 
     return (
         <div>
             <h1>{post.title}</h1>
             <p>{post.content}</p>
-            {post.image_url && <img src={post.image_url} width="300" />}
 
-            <button onClick={upvote}>Upvote ({post.upvotes})</button>
-            <button onClick={() => navigate(`/edit/${id}`)}>Edit</button>
-            <button onClick={deletePost}>Delete</button>
+            {post.image_url && (
+                <img src={post.image_url} width="300" />
+            )}
+
+            <button onClick={upvote}>
+                Upvote ({post.upvotes})
+            </button>
+
+            <button onClick={() => navigate(`/edit/${id}`)}>
+                Edit
+            </button>
+
+            <button onClick={deletePost}>
+                Delete
+            </button>
+
+            <br /><br />
+
+            <button onClick={generateSummary}>
+                Generate AI Summary
+            </button>
+
+            {summary && (
+                <div>
+                    <h3>AI Summary</h3>
+                    <p>{summary}</p>
+                </div>
+            )}
 
             <CommentSection postId={id} />
         </div>

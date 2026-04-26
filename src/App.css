@@ -182,3 +182,23 @@
     border-right-color: var(--border);
   }
 }
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background: #eee;
+}
+
+.card {
+  border: 1px solid #ccc;
+  margin: 10px;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+button {
+  margin: 5px;
+  padding: 8px;
+  cursor: pointer;
+}

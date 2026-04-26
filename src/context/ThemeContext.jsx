@@ -21,7 +21,7 @@ const themes = {
     Cars: { name: "CarHub", color: "#ef4444" },
     Coding: { name: "CodeHub", color: "#06b6d4" },
     Pets: { name: "PetHub", color: "#f59e0b" },
-    Diy: { name: "DIYHub", color: "#84cc16" },
+    Planes : { name: "PlaneHub", color: "#84cc16" },
     Business: { name: "BizHub", color: "#64748b" }
 };
 

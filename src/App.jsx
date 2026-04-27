@@ -81,33 +81,40 @@ function App() {
         >
           <option>Select a Hobby</option>
           {Object.keys(themes).map((key) => (
-            <option key={key} value={key}>
-              {key}
-            </option>
+            <option key={key}>{key}</option>
           ))}
         </select>
 
         <a href="/auth">
-          <button style={{ padding: "10px 20px", fontSize: "16px" }}>
-            Login / Signup
-          </button>
+          <button>Login / Signup</button>
         </a>
       </div>
     );
   }
 
-  return (
-    <Router>
-      <Navbar />
+  const theme = themes[selectedTheme];
 
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/create" element={<CreatePost />} />
-        <Route path="/post/:id" element={<PostPage />} />
-        <Route path="/edit/:id" element={<EditPost />} />
-        <Route path="/auth" element={<Auth />} />
-      </Routes>
-    </Router>
+  return (
+    <div
+      style={{
+        backgroundImage: `url(${theme.image})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        minHeight: "100vh",
+      }}
+    >
+      <Router>
+        <Navbar />
+
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/create" element={<CreatePost />} />
+          <Route path="/post/:id" element={<PostPage />} />
+          <Route path="/edit/:id" element={<EditPost />} />
+          <Route path="/auth" element={<Auth />} />
+        </Routes>
+      </Router>
+    </div>
   );
 }
 

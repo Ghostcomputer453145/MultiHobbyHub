@@ -4,98 +4,65 @@ import { useParams, useNavigate } from "react-router-dom";
 import CommentSection from "../components/CommentSection";
 
 export default function PostPage() {
-    const { id } = useParams();
-    const [post, setPost] = useState(null);
-    const [summary, setSummary] = useState("");
-    const navigate = useNavigate();
+  const { id } = useParams();
+  const [post, setPost] = useState(null);
+  const [summary, setSummary] = useState("");
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        fetchPost();
-    }, []);
+  useEffect(() => {
+    fetchPost();
+  }, []);
 
-    const fetchPost = async () => {
-        const { data } = await supabase
-            .from("posts")
-            .select("*")
-            .eq("id", id)
-            .single();
+  const fetchPost = async () => {
+    const { data } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-        setPost(data);
-    };
+    setPost(data);
+  };
 
-    const upvote = async () => {
-        await supabase
-            .from("posts")
-            .update({ upvotes: post.upvotes + 1 })
-            .eq("id", id);
+  const upvote = async () => {
+    const current = post.upvotes || 0;
 
-        fetchPost();
-    };
+    await supabase
+      .from("posts")
+      .update({ upvotes: current + 1 })
+      .eq("id", id);
 
-    const deletePost = async () => {
-        await supabase.from("posts").delete().eq("id", id);
-        navigate("/");
-    };
+    fetchPost();
+  };
 
-    const generateSummary = async () => {
-        const res = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer YOUR_OPENAI_KEY"
-            },
-            body: JSON.stringify({
-                model: "gpt-4o-mini",
-                messages: [
-                    {
-                        role: "user",
-                        content: `Summarize this post: ${post.content}`
-                    }
-                ]
-            })
-        });
+  const deletePost = async () => {
+    await supabase.from("posts").delete().eq("id", id);
+    navigate("/");
+  };
 
-        const data = await res.json();
-        setSummary(data.choices[0].message.content);
-    };
+  if (!post) return <p>Loading...</p>;
 
-    if (!post) return <p>Loading...</p>;
+  return (
+    <div style={{ color: "black" }}>
+      <h1>{post.title}</h1>
+      <p>{post.content}</p>
 
-    return (
-        <div>
-            <h1>{post.title}</h1>
-            <p>{post.content}</p>
+      {post.image_url && (
+        <img src={post.image_url} width="300" />
+      )}
 
-            {post.image_url && (
-                <img src={post.image_url} width="300" />
-            )}
+      <button onClick={upvote}>
+        Upvote ({post.upvotes || 0})
+      </button>
 
-            <button onClick={upvote}>
-                Upvote ({post.upvotes})
-            </button>
+      <button onClick={() => navigate(`/edit/${id}`)}>
+        Edit
+      </button>
 
-            <button onClick={() => navigate(`/edit/${id}`)}>
-                Edit
-            </button>
+      <button onClick={deletePost}>
+        Delete
+      </button>
 
-            <button onClick={deletePost}>
-                Delete
-            </button>
-
-            <br /><br />
-
-            <button onClick={generateSummary}>
-                Generate AI Summary
-            </button>
-
-            {summary && (
-                <div>
-                    <h3>AI Summary</h3>
-                    <p>{summary}</p>
-                </div>
-            )}
-
-            <CommentSection postId={id} />
-        </div>
-    );
+      <CommentSection postId={id} />
+    </div>
+  );
 }

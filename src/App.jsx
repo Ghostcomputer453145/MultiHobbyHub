@@ -9,11 +9,12 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Navbar from "./components/Navbar";
 import { supabase } from "./utils/supabaseClient";
+import UpdatePassword from "./pages/UpdatePassword";
 
 function App() {
   const { selectedTheme, setSelectedTheme, themes } = useContext(ThemeContext);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // ✅ NEW
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const getUser = async () => {
@@ -22,93 +23,70 @@ function App() {
       setLoading(false);
     };
     getUser();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user || null);
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   if (loading) return null;
 
-  if (!user) {
-    return (
-      <Router>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <div
-                style={{
-                  backgroundImage: "url('/images/hobby.png')",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                  height: "100vh",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  gap: "20px",
-                }}
-              >
-                <h1
-                  style={{
-                    color: "gold",
-                    fontSize: "72px",
-                    fontWeight: "bold",
-                    textShadow: "4px 4px 0 black",
-                  }}
-                >
-                  HobbyHub
-                </h1>
+  return (
+    <Router>
+      <Routes>
+        <Route path="/*" element={
+          !selectedTheme ? (
+            <div style={bgStyle}>
+              <h1 style={titleStyle}>HobbyHub</h1>
+              <p style={goldText}>Name: Yumin Jang</p>
+              <p style={goldText}>Z Number: Z23655899</p>
 
-                <p style={goldText}>Name: Yumin Jang</p>
-                <p style={goldText}>Z Number: Z23655899</p>
-
+              {!user ? (
                 <div style={{ display: "flex", gap: "20px" }}>
-                  <a href="/login">
-                    <button style={btnStyle}>Login</button>
-                  </a>
-                  <a href="/signup">
-                    <button style={btnStyle}>Sign Up</button>
-                  </a>
+                  <button onClick={() => window.location.href = "/login"} style={btnStyle}>
+                    Login
+                  </button>
+                  <button onClick={() => window.location.href = "/signup"} style={btnStyle}>
+                    Sign Up
+                  </button>
                 </div>
-              </div>
-            }
-          />
+              ) : (
+                <>
+                  <h2 style={goldText}>Please select a Hobby Topic</h2>
 
-          <Route path="/login" element={<Login setUser={setUser} />} />
-          <Route path="/signup" element={<Signup />} />
-        </Routes>
-      </Router>
-    );
-  }
+                  <select
+                    style={selectStyle}
+                    onChange={(e) => setSelectedTheme(e.target.value)}
+                  >
+                    <option>Select a Hobby</option>
+                    {Object.keys(themes).map((key) => (
+                      <option key={key}>{key}</option>
+                    ))}
+                  </select>
+                </>
+              )}
+            </div>
+          ) : (
+            <MainApp />
+          )
+        } />
 
-  if (!selectedTheme) {
-    return (
-      <div
-        style={{
-          backgroundImage: "url('/images/hobby.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          height: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          gap: "20px",
-        }}
-      >
-        <h1 style={goldText}>Select a Hobby</h1>
+        <Route path="/login" element={<Login setUser={setUser} />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/update-password" element={<UpdatePassword />} />
+      </Routes>
+    </Router>
+  );
+}
 
-        <select
-          style={{ padding: "10px", fontSize: "18px" }}
-          onChange={(e) => setSelectedTheme(e.target.value)}
-        >
-          <option>Select a Hobby</option>
-          {Object.keys(themes).map((key) => (
-            <option key={key}>{key}</option>
-          ))}
-        </select>
-      </div>
-    );
-  }
-
+function MainApp() {
+  const { selectedTheme, themes } = useContext(ThemeContext);
   const theme = themes[selectedTheme];
 
   return (
@@ -116,23 +94,38 @@ function App() {
       style={{
         backgroundImage: `url(${theme.bg})`,
         backgroundSize: "cover",
-        backgroundPosition: "center",
         minHeight: "100vh",
       }}
     >
-      <Router>
-        <Navbar />
+      <Navbar />
 
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/create" element={<CreatePost />} />
-          <Route path="/post/:id" element={<PostPage />} />
-          <Route path="/edit/:id" element={<EditPost />} />
-        </Routes>
-      </Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/create" element={<CreatePost />} />
+        <Route path="/post/:id" element={<PostPage />} />
+        <Route path="/edit/:id" element={<EditPost />} />
+      </Routes>
     </div>
   );
 }
+
+const bgStyle = {
+  backgroundImage: "url('/images/hobby.png')",
+  backgroundSize: "cover",
+  height: "100vh",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: "20px",
+};
+
+const titleStyle = {
+  color: "gold",
+  fontSize: "72px",
+  fontWeight: "bold",
+  textShadow: "4px 4px 0 black",
+};
 
 const goldText = {
   color: "gold",
@@ -145,6 +138,11 @@ const btnStyle = {
   fontSize: "20px",
   padding: "12px 24px",
   fontWeight: "bold",
+};
+
+const selectStyle = {
+  padding: "12px",
+  fontSize: "18px",
 };
 
 export default App;

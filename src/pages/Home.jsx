@@ -23,16 +23,29 @@ export default function Home() {
     };
 
     return (
-        <div>
-            <div>
-                <span>Order by: </span>
+        <div style={container}>
+            <div style={orderBox}>
+                <p><b>Order by:</b></p>
                 <button onClick={() => setOrderBy("created_at")}>Newest</button>
                 <button onClick={() => setOrderBy("upvotes")}>Most Popular</button>
             </div>
 
-            {posts.map((post) => (
-                <PostCard key={post.id} post={post} />
-            ))}
+            <div>
+                {posts.map((post) => (
+                    <PostCard key={post.id} post={post} />
+                ))}
+            </div>
         </div>
     );
 }
+
+const container = {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+};
+
+const orderBox = {
+    marginTop: "20px",
+    marginBottom: "20px",
+};

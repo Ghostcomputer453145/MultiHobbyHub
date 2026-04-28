@@ -2,23 +2,54 @@ import { useEffect, useState, useContext } from "react";
 import { supabase } from "../utils/supabaseClient";
 import PostCard from "../components/PostCard";
 import { ThemeContext } from "../context/ThemeContext";
+import { useLocation } from "react-router-dom";
 
 export default function Home() {
     const { selectedTheme } = useContext(ThemeContext);
     const [posts, setPosts] = useState([]);
-    const [orderBy, setOrderBy] = useState("created_at");
+    const [orderBy, setOrderBy] = useState("created_at_desc");
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const search = searchParams.get("search") || "";
 
     useEffect(() => {
         fetchPosts();
-    }, [orderBy, selectedTheme]);
+    }, [orderBy, selectedTheme, search]);
 
     const fetchPosts = async () => {
-        const { data } = await supabase
+        let query = supabase
             .from("posts")
             .select("*")
-            .eq("category", selectedTheme)
-            .order(orderBy, { ascending: false });
+            .eq("category", selectedTheme);
 
+        if (search) {
+            query = query.ilike("title", `%${search}%`);
+        }
+
+        let column = "created_at";
+        let ascending = false;
+
+        switch (orderBy) {
+            case "created_at_asc":
+                ascending = true;
+                break;
+            case "upvotes_desc":
+                column = "upvotes";
+                break;
+            case "upvotes_asc":
+                column = "upvotes";
+                ascending = true;
+                break;
+            case "title_asc":
+                column = "title";
+                ascending = true;
+                break;
+            case "title_desc":
+                column = "title";
+                break;
+        }
+
+        const { data } = await query.order(column, { ascending });
         setPosts(data || []);
     };
 
@@ -26,23 +57,37 @@ export default function Home() {
         <div style={container}>
             <div style={orderBox}>
                 <p style={orderText}>Order by:</p>
-                <div style={{ display: "flex", gap: "15px" }}>
-                    <button style={fancyBtn} onClick={() => setOrderBy("created_at")}>
-                        Newest
-                    </button>
-                    <button style={fancyBtn} onClick={() => setOrderBy("upvotes")}>
-                        Most Popular
-                    </button>
+
+                <div style={buttonRow}>
+                    <button style={fancyBtn} onClick={() => setOrderBy("created_at_desc")}>Newest</button>
+                    <button style={fancyBtn} onClick={() => setOrderBy("created_at_asc")}>Oldest</button>
+                    <button style={fancyBtn} onClick={() => setOrderBy("upvotes_desc")}>Most Popular</button>
+                    <button style={fancyBtn} onClick={() => setOrderBy("upvotes_asc")}>Least Popular</button>
+                    <button style={fancyBtn} onClick={() => setOrderBy("title_asc")}>A-Z</button>
+                    <button style={fancyBtn} onClick={() => setOrderBy("title_desc")}>Z-A</button>
                 </div>
             </div>
-            <div>
-                {posts.map((post) => (
-                    <PostCard key={post.id} post={post} />
-                ))}
-            </div>
+
+            {posts.length === 0 ? (
+                <h2 style={noResults}>There're no results...</h2>
+            ) : (
+                <div>
+                    {posts.map((post) => (
+                        <PostCard key={post.id} post={post} />
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
+
+const noResults = {
+    color: "gold",
+    fontWeight: "bold",
+    fontSize: "36px",
+    WebkitTextStroke: "2px black",
+    marginTop: "40px"
+};
 
 const container = {
     display: "flex",
@@ -52,14 +97,21 @@ const container = {
 
 const orderBox = {
     marginTop: "20px",
-    marginBottom: "20px",
+    marginBottom: "30px",
 };
 
 const orderText = {
     fontSize: "28px",
     fontWeight: "bold",
     color: "gold",
-    textShadow: "3px 3px 0 black",
+    WebkitTextStroke: "1px black",
+    marginBottom: "15px",
+};
+
+const buttonRow = {
+    display: "flex",
+    gap: "14px",
+    flexWrap: "wrap"
 };
 
 const fancyBtn = {
@@ -67,8 +119,9 @@ const fancyBtn = {
     color: "gold",
     border: "3px solid black",
     borderRadius: "20px",
-    padding: "10px 20px",
+    padding: "10px 26px",
+    fontSize: "16px",
     fontWeight: "bold",
     cursor: "pointer",
-    textShadow: "2px 2px 0 black",
+    WebkitTextStroke: "1px black",
 };

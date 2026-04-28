@@ -15,6 +15,8 @@ export default function CreatePost() {
         e.preventDefault();
         setUploading(true);
 
+        const { data: userData } = await supabase.auth.getUser(); // 🔥 NEW
+
         let finalImageUrl = imageUrl;
 
         if (file) {
@@ -43,6 +45,7 @@ export default function CreatePost() {
                 content,
                 image_url: finalImageUrl,
                 category: selectedTheme,
+                user_id: userData.user.id
             },
         ]);
 
@@ -78,16 +81,43 @@ export default function CreatePost() {
                 <label style={label}>Image URL (Option 1)</label>
                 <input
                     value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
+                    onChange={(e) => {
+                        setImageUrl(e.target.value);
+                        setFile(null);
+                    }}
                     placeholder="Paste image link here"
                     style={inputStyle}
                 />
 
                 <label style={label}>Upload Image (Option 2)</label>
+                <div
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        setFile(e.dataTransfer.files[0]);
+                        setImageUrl("");
+                    }}
+                    onDragOver={(e) => e.preventDefault()}
+                    style={{
+                        border: "2px dashed black",
+                        padding: "20px",
+                        borderRadius: "15px",
+                        marginBottom: "15px",
+                        backgroundColor: "white",
+                        color: "black",
+                        textAlign: "center",
+                        cursor: "pointer"
+                    }}
+                >
+                    Drag & Drop Image Here OR Click Below
+                </div>
+
                 <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => setFile(e.target.files[0])}
+                    onChange={(e) => {
+                        setFile(e.target.files[0]);
+                        setImageUrl("");
+                    }}
                     style={inputStyle}
                 />
 
@@ -153,17 +183,18 @@ const inputStyle = {
 
 const titleStyle = {
     color: "gold",
-    textShadow: "3px 3px 0 black",
+    WebkitTextStroke: "1px black",
 };
 
 const fancyBtn = {
     width: "100%",
-    padding: "12px",
+    padding: "15px",
     fontWeight: "bold",
     backgroundColor: "#87CEFA",
     color: "gold",
     border: "4px solid black",
     borderRadius: "25px",
     cursor: "pointer",
-    textShadow: "2px 2px 0 black",
+    fontSize: "25px",
+    WebkitTextStroke: "1px black",
 };

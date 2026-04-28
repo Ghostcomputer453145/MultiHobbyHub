@@ -87,5 +87,6 @@ const fancyBtn = {
     padding: "10px 20px",
     fontWeight: "bold",
     cursor: "pointer",
-    textShadow: "2px 2px 0 black",
+    fontSize: "20px",
+    WebkitTextStroke: "1px black",
 };

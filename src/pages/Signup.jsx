@@ -2,11 +2,12 @@ import { useState } from "react";
 import { supabase } from "../utils/supabaseClient";
 
 export default function Signup() {
+    const [first, setFirst] = useState("");
+    const [last, setLast] = useState("");
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
-
     const signup = async () => {
         if (password !== confirm) {
             alert("Passwords do not match");
@@ -17,15 +18,27 @@ export default function Signup() {
             email,
             password,
             options: {
-                data: { username }
+                data: { 
+                    username,
+                    first_name: first,
+                    last_name: last
+                }
             }
         });
 
         alert("Check your email to confirm your account");
+
+        window.location.href = "/";
     };
 
     return (
         <div>
+            <h1>First Name</h1>
+            <input onChange={(e) => setFirst(e.target.value)} />
+
+            <h1>Last Name</h1>
+            <input onChange={(e) => setLast(e.target.value)} />
+
             <h1>Username</h1>
             <input onChange={(e) => setUsername(e.target.value)} />
 

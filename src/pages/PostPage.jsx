@@ -6,11 +6,18 @@ import CommentSection from "../components/CommentSection";
 export default function PostPage() {
     const { id } = useParams();
     const [post, setPost] = useState(null);
+    const [user, setUser] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchPost();
+        getUser();
     }, []);
+
+    const getUser = async () => {
+        const { data } = await supabase.auth.getUser();
+        setUser(data.user);
+    };
 
     const fetchPost = async () => {
         const { data } = await supabase
@@ -32,6 +39,14 @@ export default function PostPage() {
     };
 
     const deletePost = async () => {
+        if (post.image_url) {
+            const fileName = post.image_url.split("/").pop();
+
+            await supabase.storage
+                .from("post-images")
+                .remove([fileName]);
+        }
+
         await supabase.from("posts").delete().eq("id", id);
         navigate("/");
     };
@@ -41,7 +56,6 @@ export default function PostPage() {
     return (
         <div style={container}>
             <div style={card}>
-
                 <p>Posted {getTimeAgo(post.created_at)}</p>
 
                 <h1 style={title}>{post.title}</h1>
@@ -57,14 +71,15 @@ export default function PostPage() {
                         👍 {post.upvotes || 0} upvotes
                     </button>
 
-                    <div>
-                        <button onClick={() => navigate(`/edit/${id}`)} style={fancyBtn}>✏️</button>
-                        <button onClick={deletePost} style={fancyBtn}>🗑</button>
-                    </div>
+                    {user && user.id === post.user_id && (
+                        <div>
+                            <button onClick={() => navigate(`/edit/${id}`)} style={fancyBtn}>✏️ Edit</button>
+                            <button onClick={deletePost} style={fancyBtn}>🗑 Delete</button>
+                        </div>
+                    )}
                 </div>
 
                 <CommentSection postId={id} />
-
             </div>
         </div>
     );
@@ -110,8 +125,9 @@ const fancyBtn = {
     color: "gold",
     border: "3px solid black",
     borderRadius: "20px",
-    padding: "8px 16px",
+    padding: "10px 18px",
     fontWeight: "bold",
+    fontSize: "25px",
     cursor: "pointer",
-    textShadow: "2px 2px 0 black",
+    WebkitTextStroke: "1px black",
 };

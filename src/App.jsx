@@ -40,42 +40,57 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/*" element={
-          !selectedTheme ? (
-            <div style={bgStyle}>
-              <h1 style={titleStyle}>HobbyHub</h1>
-              <p style={goldText}>Name: Yumin Jang</p>
-              <p style={goldText}>Z Number: Z23655899</p>
+        <Route
+          path="/*"
+          element={
+            !selectedTheme ? (
+              <div style={bgStyle}>
+                <h1 style={titleStyle}>MultiHobbyHub</h1>
+                <p style={goldText}>Name: Yumin Jang</p>
+                <p style={goldText}>Z Number: Z23655899</p>
 
-              {!user ? (
-                <div style={{ display: "flex", gap: "20px" }}>
-                  <button onClick={() => window.location.href = "/login"} style={btnStyle}>
-                    Login
-                  </button>
-                  <button onClick={() => window.location.href = "/signup"} style={btnStyle}>
-                    Sign Up
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <h2 style={goldText}>Please select a Hobby Topic</h2>
+                {!user ? (
+                  <div style={{ display: "flex", gap: "20px" }}>
+                    <button
+                      onClick={() => (window.location.href = "/login")}
+                      style={btnStyle}
+                    >
+                      Login
+                    </button>
+                    <button
+                      onClick={() => (window.location.href = "/signup")}
+                      style={btnStyle}
+                    >
+                      Sign Up
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <h2 style={goldText}>
+                      Hello {user?.user_metadata?.first_name}{" "}
+                      {user?.user_metadata?.last_name}, welcome to MultiHobbyHub
+                      where you can explore many hobbies.
+                    </h2>
 
-                  <select
-                    style={selectStyle}
-                    onChange={(e) => setSelectedTheme(e.target.value)}
-                  >
-                    <option>Select a Hobby</option>
-                    {Object.keys(themes).map((key) => (
-                      <option key={key}>{key}</option>
-                    ))}
-                  </select>
-                </>
-              )}
-            </div>
-          ) : (
-            <MainApp />
-          )
-        } />
+                    <h2 style={goldText}>Please select a Hobby Topic to start exploring!</h2>
+
+                    <select
+                      style={selectStyle}
+                      onChange={(e) => setSelectedTheme(e.target.value)}
+                    >
+                      <option>Select a Hobby</option>
+                      {Object.keys(themes).map((key) => (
+                        <option key={key}>{key}</option>
+                      ))}
+                    </select>
+                  </>
+                )}
+              </div>
+            ) : (
+              <MainApp />
+            )
+          }
+        />
 
         <Route path="/login" element={<Login setUser={setUser} />} />
         <Route path="/signup" element={<Signup />} />
@@ -122,16 +137,16 @@ const bgStyle = {
 
 const titleStyle = {
   color: "gold",
-  fontSize: "72px",
+  fontSize: "80px",
   fontWeight: "bold",
-  textShadow: "4px 4px 0 black",
+  WebkitTextStroke: "3.5px black",
 };
 
 const goldText = {
   color: "gold",
-  fontSize: "24px",
+  fontSize: "30px",
   fontWeight: "bold",
-  textShadow: "3px 3px 0 black",
+  WebkitTextStroke: "2px black",
 };
 
 const btnStyle = {

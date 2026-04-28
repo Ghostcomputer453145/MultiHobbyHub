@@ -93,16 +93,44 @@ export default function EditPost() {
                 <label style={label}>Image URL (Option 1)</label>
                 <input
                     value={imageUrl || ""}
-                    onChange={(e) => setImageUrl(e.target.value)}
+                    onChange={(e) => {
+                        setImageUrl(e.target.value);
+                        setFile(null); // 🔥 FIX
+                    }}
                     placeholder="Paste image link here"
                     style={input}
                 />
 
                 <label style={label}>Upload Image (Option 2)</label>
+
+                <div
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        setFile(e.dataTransfer.files[0]);
+                        setImageUrl("");
+                    }}
+                    onDragOver={(e) => e.preventDefault()}
+                    style={{
+                        border: "2px dashed black",
+                        padding: "20px",
+                        borderRadius: "15px",
+                        marginBottom: "15px",
+                        backgroundColor: "white",
+                        color: "black",
+                        textAlign: "center",
+                        cursor: "pointer"
+                    }}
+                >
+                    Drag & Drop Image Here OR Click Below
+                </div>
+
                 <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => setFile(e.target.files[0])}
+                    onChange={(e) => {
+                        setFile(e.target.files[0]);
+                        setImageUrl(""); // 🔥 FIX
+                    }}
                     style={input}
                 />
 
@@ -160,16 +188,18 @@ const input = {
 
 const titleStyle = {
     color: "gold",
-    textShadow: "3px 3px 0 black",
+    WebkitTextStroke: "2.5px black",
 };
 
 const fancyBtn = {
+    width: "100%",
+    padding: "15px",
+    fontWeight: "bold",
     backgroundColor: "#87CEFA",
     color: "gold",
     border: "4px solid black",
     borderRadius: "25px",
-    padding: "10px",
-    fontWeight: "bold",
     cursor: "pointer",
-    textShadow: "2px 2px 0 black",
+    fontSize: "25px",
+    WebkitTextStroke: "1px black",
 };

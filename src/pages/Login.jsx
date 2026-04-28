@@ -7,7 +7,7 @@ export default function Login({ setUser }) {
     const [password, setPassword] = useState("");
     const navigate = useNavigate();
     const login = async (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
 
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
@@ -35,11 +35,8 @@ export default function Login({ setUser }) {
             redirectTo: "http://localhost:5173/update-password",
         });
 
-        if (error) {
-            alert(error.message);
-        } else {
-            alert("Password reset email sent");
-        }
+        if (error) alert(error.message);
+        else alert("Password reset email sent");
     };
 
     return (
@@ -61,11 +58,10 @@ export default function Login({ setUser }) {
                 style={input}
             />
 
-            <button type="submit" style={btn}>Login</button>
-
-            <p onClick={resetPassword} style={forgot}>
+            <button type="submit" style={fancyBtn}>Login</button>
+            <button type="button" onClick={resetPassword} style={fancyBtn}>
                 Forgot Password?
-            </p>
+            </button>
         </form>
     );
 }
@@ -83,13 +79,13 @@ const input = {
     width: "250px"
 };
 
-const btn = {
+const fancyBtn = {
+    backgroundColor: "#87CEFA",
+    color: "gold",
+    border: "3px solid black",
+    borderRadius: "20px",
     padding: "10px 20px",
-    fontWeight: "bold"
-};
-
-const forgot = {
-    color: "blue",
+    fontWeight: "bold",
     cursor: "pointer",
-    textDecoration: "underline"
+    textShadow: "2px 2px 0 black",
 };

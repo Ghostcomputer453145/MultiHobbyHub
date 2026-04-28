@@ -69,7 +69,14 @@ const linkStyle = {
 };
 
 const logoutBtn = {
-  marginLeft: "10px",
+  backgroundColor: "#87CEFA",
+  color: "gold",
+  border: "3px solid black",
+  borderRadius: "20px",
+  padding: "8px 16px",
+  fontWeight: "bold",
+  textShadow: "2px 2px 0 black",
+  cursor: "pointer"
 };
 
 const selectStyle = {

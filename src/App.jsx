@@ -10,6 +10,7 @@ import Signup from "./pages/Signup";
 import Navbar from "./components/Navbar";
 import { supabase } from "./utils/supabaseClient";
 import UpdatePassword from "./pages/UpdatePassword";
+import LoadingSpinner from "./components/LoadingSpinner";
 
 function App() {
   const { selectedTheme, setSelectedTheme, themes } = useContext(ThemeContext);
@@ -22,6 +23,7 @@ function App() {
       setUser(data.user);
       setLoading(false);
     };
+
     getUser();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
@@ -35,7 +37,7 @@ function App() {
     };
   }, []);
 
-  if (loading) return null;
+  if (loading) return <LoadingSpinner />;
 
   return (
     <Router>
@@ -72,7 +74,9 @@ function App() {
                       where you can explore many hobbies.
                     </h2>
 
-                    <h2 style={goldText}>Please select a Hobby Topic to start exploring!</h2>
+                    <h2 style={goldText}>
+                      Please select a Hobby Topic to start exploring!
+                    </h2>
 
                     <select
                       style={selectStyle}

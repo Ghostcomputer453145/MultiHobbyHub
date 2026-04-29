@@ -2,12 +2,15 @@ import { useEffect, useState } from "react";
 import { supabase } from "../utils/supabaseClient";
 import { useParams, useNavigate } from "react-router-dom";
 import CommentSection from "../components/CommentSection";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function PostPage() {
     const { id } = useParams();
     const [post, setPost] = useState(null);
     const [user, setUser] = useState(null);
     const navigate = useNavigate();
+    const [summary, setSummary] = useState("");
+    const [loadingSummary, setLoadingSummary] = useState(false);
 
     useEffect(() => {
         fetchPost();
@@ -27,6 +30,10 @@ export default function PostPage() {
             .single();
 
         setPost(data);
+
+        if (data) {
+            generateSummary(data);
+        }
     };
 
     const upvote = async () => {
@@ -51,7 +58,56 @@ export default function PostPage() {
         navigate("/");
     };
 
-    if (!post) return <p>Loading...</p>;
+    const generateSummary = async (postData) => {
+        setLoadingSummary(true);
+
+        try {
+            const res = await fetch("https://api.openai.com/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+                },
+                body: JSON.stringify({
+                    model: "gpt-4o-mini",
+                    messages: [
+                        {
+                            role: "system",
+                            content: "Summarize posts clearly and briefly.",
+                        },
+                        {
+                            role: "user",
+                            content: `
+Title: ${postData.title}
+Content: ${postData.content}
+Upvotes: ${postData.upvotes}
+
+Give a short engaging summary.
+                        `,
+                        },
+                    ],
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                console.error(data);
+                throw new Error("API failed");
+            }
+
+            setSummary(
+                data.choices?.[0]?.message?.content || "No summary available"
+            );
+        } catch (err) {
+            console.error(err);
+            setSummary("Failed to generate summary.");
+        }
+
+        setLoadingSummary(false);
+    };
+
+    if (!post) return <LoadingSpinner />;
 
     return (
         <div style={container}>
@@ -59,12 +115,35 @@ export default function PostPage() {
                 <p>Posted {getTimeAgo(post.created_at)}</p>
 
                 <h1 style={title}>{post.title}</h1>
+                <div style={{
+                    marginTop: "20px",
+                    background: "#f4f4f4",
+                    padding: "15px",
+                    borderRadius: "10px"
+                }}>
+                    <h3>AI Summary</h3>
 
+                    {loadingSummary ? (
+                        <LoadingSpinner />
+                    ) : (
+                        <p>{summary}</p>
+                    )}
+                </div>
                 <p>{post.content}</p>
 
                 {post.image_url && (
-                    <img src={post.image_url} style={{ width: "100%", marginTop: "15px" }} />
+                    <img
+                        src={post.image_url}
+                        style={{ width: "100%", marginTop: "15px" }}
+                    />
                 )}
+
+                <div style={{ marginTop: "15px" }}>
+                    {loadingSummary && <p>Generating summary...</p>}
+                    {summary && !loadingSummary && (
+                        <p style={{ marginTop: "10px" }}>{summary}</p>
+                    )}
+                </div>
 
                 <div style={actions}>
                     <button onClick={upvote} style={fancyBtn}>
@@ -73,8 +152,8 @@ export default function PostPage() {
 
                     {user && user.id === post.user_id && (
                         <div>
-                            <button onClick={() => navigate(`/edit/${id}`)} style={fancyBtn}>✏️ Edit</button>
-                            <button onClick={deletePost} style={fancyBtn}>🗑 Delete</button>
+                            <button onClick={() => navigate(`/edit/${id}`)} style={fancyBtn} > ✏️ Edit </button>
+                            <button onClick={deletePost} style={fancyBtn}> 🗑 Delete </button>
                         </div>
                     )}
                 </div>
@@ -96,7 +175,7 @@ function getTimeAgo(date) {
 const container = {
     display: "flex",
     justifyContent: "center",
-    marginTop: "40px"
+    marginTop: "40px",
 };
 
 const card = {
@@ -104,20 +183,21 @@ const card = {
     padding: "30px",
     borderRadius: "15px",
     width: "700px",
+    maxWidth: "100%",
     boxShadow: "0 6px 15px rgba(0,0,0,0.3)",
-    color: "black"
+    color: "black",
 };
 
 const title = {
     fontSize: "32px",
     fontWeight: "bold",
-    color: "black"
+    color: "black",
 };
 
 const actions = {
     display: "flex",
     justifyContent: "space-between",
-    marginTop: "20px"
+    marginTop: "20px",
 };
 
 const fancyBtn = {

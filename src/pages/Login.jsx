@@ -25,6 +25,14 @@ export default function Login({ setUser }) {
         }
     };
 
+    const loginWithGoogle = async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+        });
+
+        if (error) alert(error.message);
+    };
+
     const resetPassword = async () => {
         if (!email) {
             alert("Enter your email first");
@@ -58,7 +66,14 @@ export default function Login({ setUser }) {
                 style={input}
             />
 
-            <button type="submit" style={fancyBtn}>Login</button>
+            <button type="submit" style={fancyBtn}>
+                Login
+            </button>
+
+            <button type="button" onClick={loginWithGoogle} style={fancyBtn}>
+                Continue with Google
+            </button>
+
             <button type="button" onClick={resetPassword} style={fancyBtn}>
                 Forgot Password?
             </button>

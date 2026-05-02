@@ -3,6 +3,7 @@ import { supabase } from "../utils/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext";
 
+
 export default function CreatePost() {
     const { selectedTheme } = useContext(ThemeContext);
     const [title, setTitle] = useState("");
@@ -15,16 +16,21 @@ export default function CreatePost() {
         e.preventDefault();
         setUploading(true);
 
+
         const { data: userData } = await supabase.auth.getUser(); // 🔥 NEW
 
+
         let finalImageUrl = imageUrl;
+
 
         if (file) {
             const fileName = `${Date.now()}-${file.name}`;
 
+
             const { error: uploadError } = await supabase.storage
                 .from("post-images")
                 .upload(fileName, file);
+
 
             if (uploadError) {
                 alert("Image upload failed");
@@ -32,12 +38,15 @@ export default function CreatePost() {
                 return;
             }
 
+
             const { data } = supabase.storage
                 .from("post-images")
                 .getPublicUrl(fileName);
 
+
             finalImageUrl = data.publicUrl;
         }
+
 
         const { error } = await supabase.from("posts").insert([
             {
@@ -49,20 +58,25 @@ export default function CreatePost() {
             },
         ]);
 
+
         setUploading(false);
+
 
         if (error) {
             alert("Failed to create post");
             return;
         }
 
+
         navigate("/");
     };
+
 
     return (
         <div style={container}>
             <form onSubmit={handleSubmit} style={formStyle}>
                 <h1 style={titleStyle}>Create Post</h1>
+
 
                 <label style={label}>Title</label>
                 <input
@@ -71,12 +85,14 @@ export default function CreatePost() {
                     style={inputStyle}
                 />
 
+
                 <label style={label}>Content (Optional)</label>
                 <textarea
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     style={{ ...inputStyle, height: "150px" }}
                 />
+
 
                 <label style={label}>Image URL (Option 1)</label>
                 <input
@@ -88,6 +104,7 @@ export default function CreatePost() {
                     placeholder="Paste image link here"
                     style={inputStyle}
                 />
+
 
                 <label style={label}>Upload Image (Option 2)</label>
                 <div
@@ -111,6 +128,7 @@ export default function CreatePost() {
                     Drag & Drop Image Here OR Click Below
                 </div>
 
+
                 <input
                     type="file"
                     accept="image/*"
@@ -121,11 +139,13 @@ export default function CreatePost() {
                     style={inputStyle}
                 />
 
+
                 {file && (
                     <p style={{ color: "black" }}>
                         Selected file: {file.name}
                     </p>
                 )}
+
 
                 <label style={label}>Current Image</label>
                 {(file || imageUrl) && (
@@ -142,6 +162,7 @@ export default function CreatePost() {
                     </div>
                 )}
 
+
                 <button style={fancyBtn} disabled={uploading}>
                     {uploading ? "Posting..." : "Create Post"}
                 </button>
@@ -150,11 +171,13 @@ export default function CreatePost() {
     );
 }
 
+
 const container = {
     display: "flex",
     justifyContent: "center",
     marginTop: "40px",
 };
+
 
 const formStyle = {
     background: "white",
@@ -163,12 +186,14 @@ const formStyle = {
     width: "500px",
 };
 
+
 const label = {
     color: "black",
     fontWeight: "bold",
     display: "block",
     marginBottom: "5px",
 };
+
 
 const inputStyle = {
     width: "100%",
@@ -181,10 +206,12 @@ const inputStyle = {
     color: "black",
 };
 
+
 const titleStyle = {
     color: "gold",
     WebkitTextStroke: "1px black",
 };
+
 
 const fancyBtn = {
     width: "100%",

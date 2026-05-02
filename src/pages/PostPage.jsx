@@ -45,6 +45,15 @@ export default function PostPage() {
         fetchPost();
     };
 
+    const downvote = async () => {
+        await supabase
+            .from("posts")
+            .update({ downvotes: (post.downvotes || 0) + 1 })
+            .eq("id", id);
+
+        fetchPost();
+    };
+
     const deletePost = async () => {
         if (post.image_url) {
             const fileName = post.image_url.split("/").pop();
@@ -62,43 +71,26 @@ export default function PostPage() {
         setLoadingSummary(true);
 
         try {
-            const res = await fetch("https://api.openai.com/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-                },
-                body: JSON.stringify({
-                    model: "gpt-4o-mini",
-                    messages: [
-                        {
-                            role: "system",
-                            content: "Summarize posts clearly and briefly.",
-                        },
-                        {
-                            role: "user",
-                            content: `
-Title: ${postData.title}
-Content: ${postData.content}
-Upvotes: ${postData.upvotes}
-
-Give a short engaging summary.
-                        `,
-                        },
-                    ],
-                }),
-            });
+            const res = await fetch(
+                "https://bxhpllaejqvwreigemxz.supabase.co/functions/v1/summarize",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        title: postData.title,
+                        content: postData.content || "",
+                        upvotes: postData.upvotes || 0,
+                    }),
+                }
+            );
 
             const data = await res.json();
 
-            if (!res.ok) {
-                console.error(data);
-                throw new Error("API failed");
-            }
+            if (!res.ok) throw new Error("Function failed");
 
-            setSummary(
-                data.choices?.[0]?.message?.content || "No summary available"
-            );
+            setSummary(data.summary);
         } catch (err) {
             console.error(err);
             setSummary("Failed to generate summary.");
@@ -115,6 +107,7 @@ Give a short engaging summary.
                 <p>Posted {getTimeAgo(post.created_at)}</p>
 
                 <h1 style={title}>{post.title}</h1>
+
                 <div style={{
                     marginTop: "20px",
                     background: "#f4f4f4",
@@ -129,6 +122,7 @@ Give a short engaging summary.
                         <p>{summary}</p>
                     )}
                 </div>
+
                 <p>{post.content}</p>
 
                 {post.image_url && (
@@ -138,22 +132,23 @@ Give a short engaging summary.
                     />
                 )}
 
-                <div style={{ marginTop: "15px" }}>
-                    {loadingSummary && <p>Generating summary...</p>}
-                    {summary && !loadingSummary && (
-                        <p style={{ marginTop: "10px" }}>{summary}</p>
-                    )}
-                </div>
-
                 <div style={actions}>
                     <button onClick={upvote} style={fancyBtn}>
                         👍 {post.upvotes || 0} upvotes
                     </button>
 
+                    <button onClick={downvote} style={fancyBtn}>
+                        👎 {post.downvotes || 0} downvotes
+                    </button>
+
                     {user && user.id === post.user_id && (
                         <div>
-                            <button onClick={() => navigate(`/edit/${id}`)} style={fancyBtn} > ✏️ Edit </button>
-                            <button onClick={deletePost} style={fancyBtn}> 🗑 Delete </button>
+                            <button onClick={() => navigate(`/edit/${id}`)} style={fancyBtn}>
+                                ✏️ Edit
+                            </button>
+                            <button onClick={deletePost} style={fancyBtn}>
+                                🗑 Delete
+                            </button>
                         </div>
                     )}
                 </div>
@@ -207,7 +202,7 @@ const fancyBtn = {
     borderRadius: "20px",
     padding: "10px 18px",
     fontWeight: "bold",
-    fontSize: "25px",
+    fontSize: "20px",
     cursor: "pointer",
     WebkitTextStroke: "1px black",
 };

@@ -5,28 +5,36 @@ import { useParams, useNavigate } from "react-router-dom";
 export default function EditPost() {
     const { id } = useParams();
     const navigate = useNavigate();
+
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [imageUrl, setImageUrl] = useState("");
     const [file, setFile] = useState(null);
     const [loading, setLoading] = useState(false);
     const [videoUrl, setVideoUrl] = useState("");
+    const [flag, setFlag] = useState(""); // ✅ NEW: post type
 
     useEffect(() => {
         loadPost();
     }, []);
 
     const loadPost = async () => {
-        const { data } = await supabase
+        const { data, error } = await supabase
             .from("posts")
             .select("*")
             .eq("id", id)
             .single();
 
-        setTitle(data.title);
-        setContent(data.content);
-        setImageUrl(data.image_url);
-        setVideoUrl(data.video_url);
+        if (error) {
+            alert("Failed to load post");
+            return;
+        }
+
+        setTitle(data.title || "");
+        setContent(data.content || "");
+        setImageUrl(data.image_url || "");
+        setVideoUrl(data.video_url || "");
+        setFlag(data.flag || ""); // ✅ NEW
     };
 
     const updatePost = async (e) => {
@@ -34,6 +42,7 @@ export default function EditPost() {
         setLoading(true);
 
         const key = prompt("Enter secret key:");
+
         const { data: postData } = await supabase
             .from("posts")
             .select("secret_key")
@@ -50,6 +59,7 @@ export default function EditPost() {
 
         if (file) {
             const fileName = `${Date.now()}-${file.name}`;
+
             const { error: uploadError } = await supabase.storage
                 .from("post-images")
                 .upload(fileName, file);
@@ -73,7 +83,8 @@ export default function EditPost() {
                 title,
                 content,
                 image_url: finalImageUrl,
-                video_url: videoUrl
+                video_url: videoUrl,
+                flag // ✅ NEW: update post type
             })
             .eq("id", id);
 
@@ -96,13 +107,29 @@ export default function EditPost() {
                 <input value={title} onChange={(e) => setTitle(e.target.value)} style={input} />
 
                 <label style={label}>Content (Optional)</label>
-                <textarea value={content} onChange={(e) => setContent(e.target.value)} style={{ ...input, height: "150px" }} />
+                <textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    style={{ ...input, height: "150px" }}
+                />
+
+                {/* ✅ NEW: Post Type */}
+                <label style={label}>Post Type</label>
+                <select value={flag} onChange={(e) => setFlag(e.target.value)} style={input}>
+                    <option value="">None</option>
+                    <option value="Question">Question</option>
+                    <option value="Opinion">Opinion</option>
+                </select>
 
                 <label style={label}>Image URL (Option 1)</label>
-                <input value={imageUrl || ""} onChange={(e) => {
-                    setImageUrl(e.target.value);
-                    setFile(null);
-                }} style={input} />
+                <input
+                    value={imageUrl || ""}
+                    onChange={(e) => {
+                        setImageUrl(e.target.value);
+                        setFile(null);
+                    }}
+                    style={input}
+                />
 
                 <label style={label}>Upload Image (Option 2)</label>
 
@@ -113,40 +140,29 @@ export default function EditPost() {
                         setImageUrl("");
                     }}
                     onDragOver={(e) => e.preventDefault()}
-                    style={{
-                        border: "2px dashed black",
-                        padding: "20px",
-                        borderRadius: "15px",
-                        marginBottom: "15px",
-                        backgroundColor: "white",
-                        color: "black",
-                        textAlign: "center",
-                        cursor: "pointer"
-                    }}
+                    style={dropBox}
                 >
                     Drag & Drop Image Here OR Click Below
                 </div>
 
-                <label style={label}>Current Image</label>
-                {(file || imageUrl) && (
-                    <img
-                        src={file ? URL.createObjectURL(file) : imageUrl}
-                        alt="preview"
-                        style={{
-                            width: "100%",
-                            borderRadius: "10px",
-                            marginBottom: "10px",
-                        }}
-                    />
-                )}
-
-                <input type="file" accept="image/*"
+                <input
+                    type="file"
+                    accept="image/*"
                     onChange={(e) => {
                         setFile(e.target.files[0]);
                         setImageUrl("");
                     }}
                     style={input}
                 />
+
+                <label style={label}>Current Image</label>
+                {(file || imageUrl) && (
+                    <img
+                        src={file ? URL.createObjectURL(file) : imageUrl}
+                        alt="preview"
+                        style={preview}
+                    />
+                )}
 
                 <label style={label}>Video URL</label>
                 <input
@@ -158,13 +174,9 @@ export default function EditPost() {
                 <label style={label}>Current Video</label>
                 {videoUrl && (
                     <video
-                        src={file ? URL.createObjectURL(file) : videoUrl}
+                        src={videoUrl}
                         controls
-                        style={{
-                            width: "100%",
-                            borderRadius: "10px",
-                            marginBottom: "10px",
-                        }}
+                        style={preview}
                     />
                 )}
 

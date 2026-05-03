@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "../utils/supabaseClient";
 import { useParams, useNavigate } from "react-router-dom";
 
-
 export default function EditPost() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -12,11 +11,9 @@ export default function EditPost() {
     const [file, setFile] = useState(null);
     const [loading, setLoading] = useState(false);
 
-
     useEffect(() => {
         loadPost();
     }, []);
-
 
     const loadPost = async () => {
         const { data } = await supabase
@@ -25,20 +22,16 @@ export default function EditPost() {
             .eq("id", id)
             .single();
 
-
         setTitle(data.title);
         setContent(data.content);
         setImageUrl(data.image_url);
     };
 
-
     const updatePost = async (e) => {
         e.preventDefault();
         setLoading(true);
 
-
         let finalImageUrl = imageUrl;
-
 
         if (file) {
             const fileName = `${Date.now()}-${file.name}`;
@@ -46,22 +39,18 @@ export default function EditPost() {
                 .from("post-images")
                 .upload(fileName, file);
 
-
             if (uploadError) {
                 alert("Image upload failed");
                 setLoading(false);
                 return;
             }
 
-
             const { data } = supabase.storage
                 .from("post-images")
                 .getPublicUrl(fileName);
 
-
             finalImageUrl = data.publicUrl;
         }
-
 
         const { error } = await supabase
             .from("posts")
@@ -72,25 +61,20 @@ export default function EditPost() {
             })
             .eq("id", id);
 
-
         setLoading(false);
-
 
         if (error) {
             alert("Update failed");
             return;
         }
 
-
         navigate(`/post/${id}`);
     };
-
 
     return (
         <div style={container}>
             <form onSubmit={updatePost} style={form}>
                 <h1 style={titleStyle}>Update Post</h1>
-
 
                 <label style={label}>Title</label>
                 <input
@@ -99,7 +83,6 @@ export default function EditPost() {
                     style={input}
                 />
 
-
                 <label style={label}>Content (Optional)</label>
                 <textarea
                     value={content}
@@ -107,21 +90,18 @@ export default function EditPost() {
                     style={{ ...input, height: "150px" }}
                 />
 
-
                 <label style={label}>Image URL (Option 1)</label>
                 <input
                     value={imageUrl || ""}
                     onChange={(e) => {
                         setImageUrl(e.target.value);
-                        setFile(null); // 🔥 FIX
+                        setFile(null);
                     }}
                     placeholder="Paste image link here"
                     style={input}
                 />
 
-
                 <label style={label}>Upload Image (Option 2)</label>
-
 
                 <div
                     onDrop={(e) => {
@@ -144,17 +124,15 @@ export default function EditPost() {
                     Drag & Drop Image Here OR Click Below
                 </div>
 
-
                 <input
                     type="file"
                     accept="image/*"
                     onChange={(e) => {
                         setFile(e.target.files[0]);
-                        setImageUrl(""); // 🔥 FIX
+                        setImageUrl("");
                     }}
                     style={input}
                 />
-
 
                 <label style={label}>Current Image</label>
                 {(file || imageUrl) && (
@@ -169,7 +147,6 @@ export default function EditPost() {
                     />
                 )}
 
-
                 <button style={fancyBtn} disabled={loading}>
                     {loading ? "Updating..." : "Update Post"}
                 </button>
@@ -178,13 +155,11 @@ export default function EditPost() {
     );
 }
 
-
 const container = {
     display: "flex",
     justifyContent: "center",
     marginTop: "40px",
 };
-
 
 const form = {
     background: "white",
@@ -193,14 +168,12 @@ const form = {
     width: "500px",
 };
 
-
 const label = {
     color: "black",
     fontWeight: "bold",
     display: "block",
     marginBottom: "5px",
 };
-
 
 const input = {
     width: "100%",
@@ -213,12 +186,10 @@ const input = {
     color: "black",
 };
 
-
 const titleStyle = {
     color: "gold",
     WebkitTextStroke: "2.5px black",
 };
-
 
 const fancyBtn = {
     width: "100%",

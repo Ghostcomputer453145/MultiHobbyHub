@@ -154,8 +154,6 @@ export default function PostPage() {
                     )}
                 </div>
 
-                <p>{post.content}</p>
-
                 {post.image_url && (
                     <img
                         src={post.image_url}

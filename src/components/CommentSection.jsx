@@ -9,7 +9,7 @@ export default function CommentSection({ postId }) {
     const [user, setUser] = useState(null);
     const [postAuthor, setPostAuthor] = useState(null);
     const [orderBy, setOrderBy] = useState("newest");
-    const [collapsed, setCollapsed] = useState({});
+    const [expandedReplies, setExpandedReplies] = useState({});
 
     useEffect(() => {
         fetchComments();
@@ -25,9 +25,7 @@ export default function CommentSection({ postId }) {
             )
             .subscribe();
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
+        return () => supabase.removeChannel(channel);
     }, [orderBy]);
 
     const getUser = async () => {
@@ -96,6 +94,7 @@ export default function CommentSection({ postId }) {
         if (!userId) return;
 
         const field = type === "up" ? "upvotes" : "downvotes";
+        const oppositeField = type === "up" ? "downvotes" : "upvotes";
 
         const { data: existing } = await supabase
             .from("votes")
@@ -112,48 +111,61 @@ export default function CommentSection({ postId }) {
 
         if (!freshComment) return;
 
-        if (existing) {
-            if (existing.type === type) return;
+        let up = freshComment.upvotes || 0;
+        let down = freshComment.downvotes || 0;
 
-            const oldField = existing.type === "up" ? "upvotes" : "downvotes";
+        if (!existing) {
+            await supabase.from("votes").insert([{
+                user_id: userId,
+                comment_id: commentId,
+                type
+            }]);
 
-            await supabase
-                .from("comments")
-                .update({
-                    [oldField]: Math.max((freshComment[oldField] || 0) - 1, 0),
-                    [field]: (freshComment[field] || 0) + 1,
-                })
-                .eq("id", commentId);
+            if (type === "up") up++;
+            else down++;
+        }
 
+        else if (existing.type !== type) {
             await supabase
                 .from("votes")
                 .update({ type })
                 .eq("id", existing.id);
 
-            fetchComments();
+            if (type === "up") {
+                up++;
+                down = Math.max(down - 1, 0);
+            } else {
+                down++;
+                up = Math.max(up - 1, 0);
+            }
+        }
+
+        else {
             return;
         }
 
-        await supabase.from("votes").insert([{
-            user_id: userId,
-            comment_id: commentId,
-            type
-        }]);
-
         await supabase
             .from("comments")
-            .update({
-                [field]: (freshComment[field] || 0) + 1
-            })
+            .update({ upvotes: up, downvotes: down })
             .eq("id", commentId);
 
         fetchComments();
+    };
+
+    const toggleReplies = (id) => {
+        setExpandedReplies(prev => ({
+            ...prev,
+            [id]: !prev[id]
+        }));
     };
 
     const renderComments = (parentId = null) => {
         return comments
             .filter(c => c.parent_id === parentId)
             .map(c => {
+                const replies = comments.filter(r => r.parent_id === c.id);
+                const hasReplies = replies.length > 0;
+                const isExpanded = expandedReplies[c.id];
                 const isAuthor = c.user_id === postAuthor;
                 const isOwner = user?.id === c.user_id;
 
@@ -169,22 +181,18 @@ export default function CommentSection({ postId }) {
 
                         <div style={actions}>
                             <button style={btn} onClick={() => vote(c.id, "up")}> 👍 {c.upvotes || 0} upvotes </button>
-                            <button style={btn} onClick={() => vote(c.id, "down")}> 👎 {c.downvotes || 0} downvotes </button>
+                            <button style={btn} onClick={() => vote(c.id, "down")}>👎 {c.downvotes || 0} downvotes </button>
                             <button style={btn} onClick={() => setReplyBox(c.id)}> 💬 Reply </button>
-                            {isOwner && ( <button style={btn} onClick={() => deleteComment(c.id)}> 🗑 Delete </button> )}
+                            {isOwner && (<button style={btn} onClick={() => deleteComment(c.id)}> 🗑 Delete </button>)}
                         </div>
-
-                        <button
-                            style={btn}
-                            onClick={() =>
-                                setCollapsed(prev => ({
-                                    ...prev,
-                                    [c.id]: !prev[c.id]
-                                }))
-                            }
-                        >
-                            {collapsed[c.id] ? "▶ Expand" : "▼ Collapse"}
-                        </button>
+                        {hasReplies && (
+                            <button style={btn} onClick={() => toggleReplies(c.id)}>
+                                {isExpanded
+                                    ? "▼ Hide replies"
+                                    : `▶ ${replies.length === 1 ? "View reply" : `View replies (${replies.length})`}`
+                                }
+                            </button>
+                        )}
 
                         {replyBox === c.id && (
                             <input
@@ -200,7 +208,7 @@ export default function CommentSection({ postId }) {
                             />
                         )}
 
-                        {!collapsed[c.id] && renderComments(c.id)}
+                        {isExpanded && renderComments(c.id)}
                     </div>
                 );
             });

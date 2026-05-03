@@ -1,8 +1,8 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { supabase } from "../utils/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext";
-
+import { useLocation } from "react-router-dom";
 
 export default function CreatePost() {
     const { selectedTheme } = useContext(ThemeContext);
@@ -10,10 +10,28 @@ export default function CreatePost() {
     const [content, setContent] = useState("");
     const [imageUrl, setImageUrl] = useState("");
     const [file, setFile] = useState(null);
+    const [secretKey, setSecretKey] = useState("");
     const [uploading, setUploading] = useState(false);
     const navigate = useNavigate();
+    const [videoUrl, setVideoUrl] = useState("");
+    const [flag, setFlag] = useState("");
+    const [referenceId, setReferenceId] = useState("");
+    const location = useLocation();
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const ref = params.get("ref");
+        if (ref) setReferenceId(ref);
+    }, []);
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!secretKey.trim()) {
+            alert("Secret key is required to create a post.");
+            return;
+        }
+
         setUploading(true);
 
         const { data: userData } = await supabase.auth.getUser();
@@ -46,7 +64,11 @@ export default function CreatePost() {
                 content,
                 image_url: finalImageUrl,
                 category: selectedTheme,
-                user_id: userData.user.id
+                user_id: userData.user.id,
+                secret_key: secretKey,
+                flag,
+                video_url: videoUrl,
+                referenced_post_id: referenceId ? parseInt(referenceId) : null
             },
         ]);
 
@@ -64,18 +86,35 @@ export default function CreatePost() {
         <div style={container}>
             <form onSubmit={handleSubmit} style={formStyle}>
                 <h1 style={titleStyle}>Create Post</h1>
+
                 <label style={label}>Title</label>
                 <input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     style={inputStyle}
                 />
+
                 <label style={label}>Content (Optional)</label>
                 <textarea
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     style={{ ...inputStyle, height: "150px" }}
                 />
+
+                <label style={label}>Secret Key (Required for edit/delete)</label>
+                <input
+                    value={secretKey}
+                    onChange={(e) => setSecretKey(e.target.value)}
+                    style={inputStyle}
+                />
+
+                <label style={label}>Reference Post ID (Optional)</label>
+                <input
+                    value={referenceId}
+                    onChange={(e) => setReferenceId(e.target.value)}
+                    style={inputStyle}
+                />
+
                 <label style={label}>Image URL (Option 1)</label>
                 <input
                     value={imageUrl}
@@ -86,7 +125,9 @@ export default function CreatePost() {
                     placeholder="Paste image link here"
                     style={inputStyle}
                 />
+
                 <label style={label}>Upload Image (Option 2)</label>
+
                 <div
                     onDrop={(e) => {
                         e.preventDefault();
@@ -139,12 +180,91 @@ export default function CreatePost() {
                     </div>
                 )}
 
+                <label style={label}>Post Type</label>
+                <select value={flag} onChange={(e) => setFlag(e.target.value)} style={inputStyle}>
+                    <option value="">None</option>
+                    <option value="Question">Question</option>
+                    <option value="Opinion">Opinion</option>
+                </select>
+
+                <label style={label}>Video URL (Optional)</label>
+                <input
+                    value={videoUrl}
+                    onChange={(e) => setVideoUrl(e.target.value)}
+                    style={inputStyle}
+                />
+
+                <label style={label}>Current Video</label>
+                {videoUrl && (
+                    <div style={{ marginTop: "10px" }}>
+                        {getEmbedData(videoUrl).type === "video" ? (
+                            <video
+                                src={getEmbedData(videoUrl).src}
+                                controls
+                                style={{
+                                    width: "100%",
+                                    borderRadius: "10px",
+                                    marginBottom: "10px",
+                                }}
+                            />
+                        ) : (
+                            <iframe
+                                src={getEmbedData(videoUrl).src}
+                                width="100%"
+                                height="400"
+                                style={{ borderRadius: "10px" }}
+                                allowFullScreen
+                            />
+                        )}
+                    </div>
+                )}
+
                 <button style={fancyBtn} disabled={uploading}>
                     {uploading ? "Posting..." : "Create Post"}
                 </button>
             </form>
         </div>
     );
+}
+
+function getEmbedData(url) {
+    if (!url) return { type: null };
+
+    if (url.includes("youtu.be") || url.includes("youtube.com")) {
+        let id = "";
+
+        if (url.includes("youtu.be")) {
+            id = url.split("/").pop().split("?")[0];
+        } else {
+            const match = url.match(/[?&]v=([^&]+)/);
+            id = match ? match[1] : "";
+        }
+
+        return {
+            type: "iframe",
+            src: `https://www.youtube.com/embed/${id}`
+        };
+    }
+
+    if (url.includes("vimeo.com")) {
+        const id = url.split("/").pop();
+        return {
+            type: "iframe",
+            src: `https://player.vimeo.com/video/${id}`
+        };
+    }
+
+    if (url.match(/\.(mp4|webm|ogg)$/)) {
+        return {
+            type: "video",
+            src: url
+        };
+    }
+
+    return {
+        type: "iframe",
+        src: url
+    };
 }
 
 const container = {

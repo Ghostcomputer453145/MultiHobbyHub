@@ -10,6 +10,7 @@ export default function EditPost() {
     const [imageUrl, setImageUrl] = useState("");
     const [file, setFile] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [videoUrl, setVideoUrl] = useState("");
 
     useEffect(() => {
         loadPost();
@@ -25,11 +26,25 @@ export default function EditPost() {
         setTitle(data.title);
         setContent(data.content);
         setImageUrl(data.image_url);
+        setVideoUrl(data.video_url);
     };
 
     const updatePost = async (e) => {
         e.preventDefault();
         setLoading(true);
+
+        const key = prompt("Enter secret key:");
+        const { data: postData } = await supabase
+            .from("posts")
+            .select("secret_key")
+            .eq("id", id)
+            .single();
+
+        if (key !== postData.secret_key) {
+            alert("Wrong secret key");
+            setLoading(false);
+            return;
+        }
 
         let finalImageUrl = imageUrl;
 
@@ -58,6 +73,7 @@ export default function EditPost() {
                 title,
                 content,
                 image_url: finalImageUrl,
+                video_url: videoUrl
             })
             .eq("id", id);
 
@@ -77,29 +93,16 @@ export default function EditPost() {
                 <h1 style={titleStyle}>Update Post</h1>
 
                 <label style={label}>Title</label>
-                <input
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    style={input}
-                />
+                <input value={title} onChange={(e) => setTitle(e.target.value)} style={input} />
 
                 <label style={label}>Content (Optional)</label>
-                <textarea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    style={{ ...input, height: "150px" }}
-                />
+                <textarea value={content} onChange={(e) => setContent(e.target.value)} style={{ ...input, height: "150px" }} />
 
                 <label style={label}>Image URL (Option 1)</label>
-                <input
-                    value={imageUrl || ""}
-                    onChange={(e) => {
-                        setImageUrl(e.target.value);
-                        setFile(null);
-                    }}
-                    placeholder="Paste image link here"
-                    style={input}
-                />
+                <input value={imageUrl || ""} onChange={(e) => {
+                    setImageUrl(e.target.value);
+                    setFile(null);
+                }} style={input} />
 
                 <label style={label}>Upload Image (Option 2)</label>
 
@@ -124,9 +127,20 @@ export default function EditPost() {
                     Drag & Drop Image Here OR Click Below
                 </div>
 
-                <input
-                    type="file"
-                    accept="image/*"
+                <label style={label}>Current Image</label>
+                {(file || imageUrl) && (
+                    <img
+                        src={file ? URL.createObjectURL(file) : imageUrl}
+                        alt="preview"
+                        style={{
+                            width: "100%",
+                            borderRadius: "10px",
+                            marginBottom: "10px",
+                        }}
+                    />
+                )}
+
+                <input type="file" accept="image/*"
                     onChange={(e) => {
                         setFile(e.target.files[0]);
                         setImageUrl("");
@@ -134,11 +148,18 @@ export default function EditPost() {
                     style={input}
                 />
 
-                <label style={label}>Current Image</label>
-                {(file || imageUrl) && (
-                    <img
-                        src={file ? URL.createObjectURL(file) : imageUrl}
-                        alt="preview"
+                <label style={label}>Video URL</label>
+                <input
+                    value={videoUrl || ""}
+                    onChange={(e) => setVideoUrl(e.target.value)}
+                    style={input}
+                />
+
+                <label style={label}>Current Video</label>
+                {videoUrl && (
+                    <video
+                        src={file ? URL.createObjectURL(file) : videoUrl}
+                        controls
                         style={{
                             width: "100%",
                             borderRadius: "10px",

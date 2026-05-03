@@ -20,7 +20,6 @@ export default function Auth() {
       <h2>Login / Signup</h2>
       <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
       <input placeholder="Password" type="password" onChange={(e) => setPassword(e.target.value)} />
-
       <button onClick={login}>Login</button>
       <button onClick={signUp}>Sign Up</button>
     </div>

@@ -3,6 +3,7 @@ import { supabase } from "../utils/supabaseClient";
 import PostCard from "../components/PostCard";
 import { ThemeContext } from "../context/ThemeContext";
 import { useLocation } from "react-router-dom";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function Home() {
     const { selectedTheme } = useContext(ThemeContext);
@@ -11,12 +12,16 @@ export default function Home() {
     const location = useLocation();
     const searchParams = new URLSearchParams(location.search);
     const search = searchParams.get("search") || "";
+    const [flagFilter, setFlagFilter] = useState("");
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchPosts();
-    }, [orderBy, selectedTheme, search]);
+    }, [orderBy, selectedTheme, search, flagFilter]);
 
     const fetchPosts = async () => {
+        setLoading(true);
+
         let query = supabase
             .from("posts")
             .select("*")
@@ -24,6 +29,10 @@ export default function Home() {
 
         if (search) {
             query = query.ilike("title", `%${search}%`);
+        }
+
+        if (flagFilter) {
+            query = query.eq("flag", flagFilter);
         }
 
         let column = "created_at";
@@ -50,7 +59,9 @@ export default function Home() {
         }
 
         const { data } = await query.order(column, { ascending });
+
         setPosts(data || []);
+        setLoading(false);
     };
 
     return (
@@ -68,7 +79,15 @@ export default function Home() {
                 </div>
             </div>
 
-            {posts.length === 0 ? (
+            <select onChange={(e) => setFlagFilter(e.target.value)} style={fancyBtn}>
+                <option value="">All</option>
+                <option value="Question">Question</option>
+                <option value="Opinion">Opinion</option>
+            </select>
+
+            {loading ? (
+                <LoadingSpinner />
+            ) : posts.length === 0 ? (
                 <h2 style={noResults}>There're no results...</h2>
             ) : (
                 <div>

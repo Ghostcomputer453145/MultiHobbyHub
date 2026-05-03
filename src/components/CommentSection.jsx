@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../utils/supabaseClient";
+import LoadingSpinner from "./LoadingSpinner";
 
 export default function CommentSection({ postId }) {
     const [comments, setComments] = useState([]);
@@ -8,13 +9,15 @@ export default function CommentSection({ postId }) {
     const [replyText, setReplyText] = useState("");
     const [user, setUser] = useState(null);
     const [postAuthor, setPostAuthor] = useState(null);
+    const [postSecretKey, setPostSecretKey] = useState("");
     const [orderBy, setOrderBy] = useState("newest");
     const [expandedReplies, setExpandedReplies] = useState({});
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchComments();
         getUser();
-        getPostAuthor();
+        getPostMeta();
 
         const channel = supabase
             .channel("comments-live")
@@ -26,24 +29,27 @@ export default function CommentSection({ postId }) {
             .subscribe();
 
         return () => supabase.removeChannel(channel);
-    }, [orderBy]);
+    }, [orderBy, postId]);
 
     const getUser = async () => {
         const { data } = await supabase.auth.getUser();
         setUser(data.user);
     };
 
-    const getPostAuthor = async () => {
+    const getPostMeta = async () => {
         const { data } = await supabase
             .from("posts")
-            .select("user_id")
+            .select("user_id, secret_key")
             .eq("id", postId)
             .single();
 
         setPostAuthor(data?.user_id);
+        setPostSecretKey(data?.secret_key);
     };
 
     const fetchComments = async () => {
+        setLoading(true);
+
         let column = "created_at";
         let ascending = false;
 
@@ -61,6 +67,24 @@ export default function CommentSection({ postId }) {
             .order(column, { ascending });
 
         setComments(data || []);
+        setLoading(false);
+    };
+
+    const deleteComment = async (comment) => {
+        const currentUserId = user?.id;
+        const isOwner = currentUserId === comment.user_id;
+        const isPostAuthor = currentUserId === postAuthor;
+
+        if (!isOwner && !isPostAuthor) {
+            const inputKey = prompt("Enter secret key to delete this comment:");
+            if (inputKey !== postSecretKey) {
+                alert("Incorrect secret key.");
+                return;
+            }
+        }
+
+        await supabase.from("comments").delete().eq("id", comment.id);
+        fetchComments();
     };
 
     const addComment = async (parentId = null, contentOverride = null) => {
@@ -82,73 +106,6 @@ export default function CommentSection({ postId }) {
         setText("");
         setReplyText("");
         setReplyBox(null);
-    };
-
-    const deleteComment = async (id) => {
-        await supabase.from("comments").delete().eq("id", id);
-    };
-
-    const vote = async (commentId, type) => {
-        const { data: userData } = await supabase.auth.getUser();
-        const userId = userData?.user?.id;
-        if (!userId) return;
-
-        const field = type === "up" ? "upvotes" : "downvotes";
-        const oppositeField = type === "up" ? "downvotes" : "upvotes";
-
-        const { data: existing } = await supabase
-            .from("votes")
-            .select("*")
-            .eq("user_id", userId)
-            .eq("comment_id", commentId)
-            .single();
-
-        const { data: freshComment } = await supabase
-            .from("comments")
-            .select("upvotes, downvotes")
-            .eq("id", commentId)
-            .single();
-
-        if (!freshComment) return;
-
-        let up = freshComment.upvotes || 0;
-        let down = freshComment.downvotes || 0;
-
-        if (!existing) {
-            await supabase.from("votes").insert([{
-                user_id: userId,
-                comment_id: commentId,
-                type
-            }]);
-
-            if (type === "up") up++;
-            else down++;
-        }
-
-        else if (existing.type !== type) {
-            await supabase
-                .from("votes")
-                .update({ type })
-                .eq("id", existing.id);
-
-            if (type === "up") {
-                up++;
-                down = Math.max(down - 1, 0);
-            } else {
-                down++;
-                up = Math.max(up - 1, 0);
-            }
-        }
-
-        else {
-            return;
-        }
-
-        await supabase
-            .from("comments")
-            .update({ upvotes: up, downvotes: down })
-            .eq("id", commentId);
-
         fetchComments();
     };
 
@@ -159,14 +116,27 @@ export default function CommentSection({ postId }) {
         }));
     };
 
+    const voteComment = async (comment, type) => {
+        const newUp = (comment.upvotes || 0) + (type === "up" ? 1 : 0);
+        const newDown = (comment.downvotes || 0) + (type === "down" ? 1 : 0);
+
+        await supabase
+            .from("comments")
+            .update({
+                upvotes: newUp,
+                downvotes: newDown
+            })
+            .eq("id", comment.id);
+
+        fetchComments();
+    };
+
     const renderComments = (parentId = null) => {
         return comments
             .filter(c => c.parent_id === parentId)
             .map(c => {
                 const replies = comments.filter(r => r.parent_id === c.id);
-                const hasReplies = replies.length > 0;
                 const isExpanded = expandedReplies[c.id];
-                const isAuthor = c.user_id === postAuthor;
                 const isOwner = user?.id === c.user_id;
 
                 return (
@@ -174,25 +144,21 @@ export default function CommentSection({ postId }) {
                         <div style={header}>
                             <span style={username}>{c.username}</span>
                             <span style={time}>{getTimeAgo(c.created_at)}</span>
-                            {isAuthor && <span style={authorTag}>by author</span>}
                         </div>
 
                         <p style={content}>{c.content}</p>
 
                         <div style={actions}>
-                            <button style={btn} onClick={() => vote(c.id, "up")}> 👍 {c.upvotes || 0} upvotes </button>
-                            <button style={btn} onClick={() => vote(c.id, "down")}>👎 {c.downvotes || 0} downvotes </button>
+                            <button style={btn} onClick={() => voteComment(c, "up")}> 👍 {c.upvotes || 0} upvotes </button>
+                            <button style={btn} onClick={() => voteComment(c, "down")}> 👎 {c.downvotes || 0} downvotes </button>
                             <button style={btn} onClick={() => setReplyBox(c.id)}> 💬 Reply </button>
-                            {isOwner && (<button style={btn} onClick={() => deleteComment(c.id)}> 🗑 Delete </button>)}
+
+                            {isOwner && (
+                                <button style={btn} onClick={() => deleteComment(c)}>
+                                    🗑 Delete
+                                </button>
+                            )}
                         </div>
-                        {hasReplies && (
-                            <button style={btn} onClick={() => toggleReplies(c.id)}>
-                                {isExpanded
-                                    ? "▼ Hide replies"
-                                    : `▶ ${replies.length === 1 ? "View reply" : `View replies (${replies.length})`}`
-                                }
-                            </button>
-                        )}
 
                         {replyBox === c.id && (
                             <input
@@ -201,11 +167,15 @@ export default function CommentSection({ postId }) {
                                 placeholder="Reply..."
                                 style={inputStyle}
                                 onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                        addComment(c.id, replyText);
-                                    }
+                                    if (e.key === "Enter") addComment(c.id, replyText);
                                 }}
                             />
+                        )}
+
+                        {replies.length > 0 && (
+                            <button style={btn} onClick={() => toggleReplies(c.id)}>
+                                {isExpanded ? "Hide replies" : `View replies (${replies.length})`}
+                            </button>
                         )}
 
                         {isExpanded && renderComments(c.id)}
@@ -225,7 +195,7 @@ export default function CommentSection({ postId }) {
                 <option value="unpopular">Least Popular</option>
             </select>
 
-            {renderComments()}
+            {loading ? <LoadingSpinner /> : renderComments()}
 
             <input
                 value={text}

@@ -1,13 +1,18 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 export default function PostCard({ post }) {
-    const timeAgo = getTimeAgo(post.created_at);
+    const [displayTitle, setDisplayTitle] = useState(post.title);
+
+    useEffect(() => {
+        setDisplayTitle(post.title);
+    }, [post.title]);
 
     return (
         <Link to={`/post/${post.id}`} style={{ textDecoration: "none" }}>
             <div style={cardStyle}>
-                <p>Posted {timeAgo}</p>
-                <h2 style={titleStyle}>{post.title}</h2>
+                <p>Posted {getTimeAgo(post.created_at)}</p>
+                <h2 style={titleStyle}>{displayTitle}</h2>
                 <p>{post.upvotes} upvotes</p>
             </div>
         </Link>
@@ -22,8 +27,7 @@ function getTimeAgo(date) {
     if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
     if (diff < 2419200) return `${Math.floor(diff / 604800)} weeks ago`;
     if (diff < 29030400) return `${Math.floor(diff / 2419200)} months ago`;
-    if (diff < 290304000) return `${Math.floor(diff / 29030400)} years ago`;
-    return `${Math.floor(diff / 86400)} days ago`;
+    return `${Math.floor(diff / 29030400)} years ago`;
 }
 
 const cardStyle = {

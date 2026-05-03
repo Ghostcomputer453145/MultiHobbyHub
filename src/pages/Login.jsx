@@ -49,7 +49,7 @@ export default function Login({ setUser }) {
 
     return (
         <form onSubmit={login} style={container}>
-            <h1>Login</h1>
+            <h1 style={title}>Login</h1>
 
             <input
                 placeholder="Email"
@@ -66,17 +66,11 @@ export default function Login({ setUser }) {
                 style={input}
             />
 
-            <button type="submit" style={fancyBtn}>
-                Login
-            </button>
-
-            <button type="button" onClick={loginWithGoogle} style={fancyBtn}>
-                Continue with Google
-            </button>
-
-            <button type="button" onClick={resetPassword} style={fancyBtn}>
-                Forgot Password?
-            </button>
+            <button type="submit" style={fancyBtn}> Login </button>
+            <button type="button" onClick={loginWithGoogle} style={{ ...fancyBtn, marginTop: "5px" }} > Continue with Google </button>
+            <p style={text}> Don't have an account? </p>
+            <button type="button" onClick={() => navigate("/signup")} style={{ ...fancyBtn, marginTop: "5px" }} > Sign Up! </button>
+            <button type="button" onClick={resetPassword} style={{ ...fancyBtn, marginTop: "10px" }}> Forgot Password? </button>
         </form>
     );
 }
@@ -87,6 +81,22 @@ const container = {
     alignItems: "center",
     marginTop: "100px",
     gap: "10px"
+};
+
+const title = {
+    color: "gold",
+    WebkitTextStroke: "1px black",
+    fontSize: "40px",
+    marginBottom: "10px"
+};
+
+const text = {
+    color: "gold",
+    fontWeight: "bold",
+    WebkitTextStroke: "1px magenta",
+    fontSize: "30px",
+    marginTop: "20px",
+    marginBottom: "10px"
 };
 
 const input = {

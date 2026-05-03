@@ -36,19 +36,56 @@ export default function PostPage() {
         }
     };
 
-    const upvote = async () => {
+    const vote = async (type) => {
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData?.user?.id;
+        if (!userId) return;
+
+        const { data: existing } = await supabase
+            .from("votes")
+            .select("*")
+            .eq("user_id", userId)
+            .eq("post_id", id)
+            .single();
+
+        const upField = "upvotes";
+        const downField = "downvotes";
+
+        let newUp = post.upvotes || 0;
+        let newDown = post.downvotes || 0;
+
+        if (!existing) {
+            await supabase.from("votes").insert([{
+                user_id: userId,
+                post_id: id,
+                type
+            }]);
+
+            if (type === "up") newUp++;
+            else newDown++;
+        }
+        else if (existing.type !== type) {
+            await supabase
+                .from("votes")
+                .update({ type })
+                .eq("id", existing.id);
+
+            if (type === "up") {
+                newUp++;
+                newDown = Math.max(newDown - 1, 0);
+            } else {
+                newDown++;
+                newUp = Math.max(newUp - 1, 0);
+            }
+        }
+        else return;
+
         await supabase
             .from("posts")
-            .update({ upvotes: (post.upvotes || 0) + 1 })
-            .eq("id", id);
-
-        fetchPost();
-    };
-
-    const downvote = async () => {
-        await supabase
-            .from("posts")
-            .update({ downvotes: (post.downvotes || 0) + 1 })
+            .update({
+                upvotes: newUp,
+                downvotes: newDown
+            })
             .eq("id", id);
 
         fetchPost();
@@ -77,20 +114,17 @@ export default function PostPage() {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+                        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
                     },
-                    body: JSON.stringify({
-                        title: postData.title,
-                        content: postData.content || "",
-                        upvotes: postData.upvotes || 0,
-                    }),
+                    body: JSON.stringify(postData),
                 }
             );
 
             const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
 
-            if (!res.ok) throw new Error("Function failed");
-
-            setSummary(data.summary);
+            setSummary(data.summary || "");
         } catch (err) {
             console.error(err);
             setSummary("Failed to generate summary.");
@@ -104,22 +138,19 @@ export default function PostPage() {
     return (
         <div style={container}>
             <div style={card}>
+
                 <p>Posted {getTimeAgo(post.created_at)}</p>
 
                 <h1 style={title}>{post.title}</h1>
 
-                <div style={{
-                    marginTop: "20px",
-                    background: "#f4f4f4",
-                    padding: "15px",
-                    borderRadius: "10px"
-                }}>
-                    <h3>AI Summary</h3>
+                <p>{post.content}</p>
 
+                <div style={summaryBox}>
+                    <h3>AI Summary</h3>
                     {loadingSummary ? (
                         <LoadingSpinner />
                     ) : (
-                        <p>{summary}</p>
+                        <p style={summaryText}>{summary}</p>
                     )}
                 </div>
 
@@ -133,22 +164,16 @@ export default function PostPage() {
                 )}
 
                 <div style={actions}>
-                    <button onClick={upvote} style={fancyBtn}>
-                        👍 {post.upvotes || 0} upvotes
-                    </button>
 
-                    <button onClick={downvote} style={fancyBtn}>
-                        👎 {post.downvotes || 0} downvotes
-                    </button>
+                    <div style={voteGroup}>
+                        <button onClick={() => vote("up")} style={voteBtn}> 👍 {post.upvotes || 0} upvotes </button>
+                        <button onClick={() => vote("down")} style={voteBtn}> 👎 {post.downvotes || 0} downvotes </button>
+                    </div>
 
                     {user && user.id === post.user_id && (
                         <div>
-                            <button onClick={() => navigate(`/edit/${id}`)} style={fancyBtn}>
-                                ✏️ Edit
-                            </button>
-                            <button onClick={deletePost} style={fancyBtn}>
-                                🗑 Delete
-                            </button>
+                            <button onClick={() => navigate(`/edit/${id}`)} style={fancyBtn}> ✏️ Edit </button>
+                            <button onClick={deletePost} style={fancyBtn}> 🗑 Delete </button>
                         </div>
                     )}
                 </div>
@@ -189,10 +214,42 @@ const title = {
     color: "black",
 };
 
+const summaryBox = {
+    marginTop: "20px",
+    background: "white",
+    color: "gold",
+    padding: "20px",
+    borderRadius: "12px",
+    border: "3px solid black",
+};
+
+const summaryText = {
+    fontWeight: "bold",
+    fontSize: "18px",
+    color: "black",
+};
+
 const actions = {
     display: "flex",
     justifyContent: "space-between",
     marginTop: "20px",
+};
+
+const voteGroup = {
+    display: "flex",
+    gap: "0px",
+};
+
+const voteBtn = {
+    backgroundColor: "#87CEFA",
+    color: "gold",
+    border: "3px solid black",
+    borderRadius: "20px",
+    padding: "10px 18px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    WebkitTextStroke: "1px black",
+    fontSize: "20px",
 };
 
 const fancyBtn = {

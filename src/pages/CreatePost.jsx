@@ -77,7 +77,6 @@ export default function CreatePost() {
             <form onSubmit={handleSubmit} style={formStyle}>
                 <h1 style={titleStyle}>Create Post</h1>
 
-
                 <label style={label}>Title</label>
                 <input
                     value={title}
@@ -85,14 +84,12 @@ export default function CreatePost() {
                     style={inputStyle}
                 />
 
-
                 <label style={label}>Content (Optional)</label>
                 <textarea
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     style={{ ...inputStyle, height: "150px" }}
                 />
-
 
                 <label style={label}>Image URL (Option 1)</label>
                 <input
@@ -104,7 +101,6 @@ export default function CreatePost() {
                     placeholder="Paste image link here"
                     style={inputStyle}
                 />
-
 
                 <label style={label}>Upload Image (Option 2)</label>
                 <div
@@ -128,7 +124,6 @@ export default function CreatePost() {
                     Drag & Drop Image Here OR Click Below
                 </div>
 
-
                 <input
                     type="file"
                     accept="image/*"
@@ -139,13 +134,11 @@ export default function CreatePost() {
                     style={inputStyle}
                 />
 
-
                 {file && (
                     <p style={{ color: "black" }}>
                         Selected file: {file.name}
                     </p>
                 )}
-
 
                 <label style={label}>Current Image</label>
                 {(file || imageUrl) && (
@@ -162,7 +155,6 @@ export default function CreatePost() {
                     </div>
                 )}
 
-
                 <button style={fancyBtn} disabled={uploading}>
                     {uploading ? "Posting..." : "Create Post"}
                 </button>
@@ -171,13 +163,11 @@ export default function CreatePost() {
     );
 }
 
-
 const container = {
     display: "flex",
     justifyContent: "center",
     marginTop: "40px",
 };
-
 
 const formStyle = {
     background: "white",
@@ -186,14 +176,12 @@ const formStyle = {
     width: "500px",
 };
 
-
 const label = {
     color: "black",
     fontWeight: "bold",
     display: "block",
     marginBottom: "5px",
 };
-
 
 const inputStyle = {
     width: "100%",
@@ -206,12 +194,10 @@ const inputStyle = {
     color: "black",
 };
 
-
 const titleStyle = {
     color: "gold",
     WebkitTextStroke: "1px black",
 };
-
 
 const fancyBtn = {
     width: "100%",

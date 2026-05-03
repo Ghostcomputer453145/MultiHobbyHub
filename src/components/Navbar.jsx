@@ -51,7 +51,7 @@ export default function Navbar() {
 
         <div style={rightBar}>
           <Link to="/" style={navBtn}>Home</Link>
-          <Link to="/create" style={navBtn}>Create Post</Link>
+          <Link to="/create" style={navBtn}>Create New Post</Link>
 
           <div ref={menuRef} style={{ position: "relative" }}>
             <button onClick={() => setShowMenu(!showMenu)} style={profileBtn}>

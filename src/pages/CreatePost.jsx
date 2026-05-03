@@ -16,21 +16,16 @@ export default function CreatePost() {
         e.preventDefault();
         setUploading(true);
 
-
-        const { data: userData } = await supabase.auth.getUser(); // 🔥 NEW
-
+        const { data: userData } = await supabase.auth.getUser();
 
         let finalImageUrl = imageUrl;
-
 
         if (file) {
             const fileName = `${Date.now()}-${file.name}`;
 
-
             const { error: uploadError } = await supabase.storage
                 .from("post-images")
                 .upload(fileName, file);
-
 
             if (uploadError) {
                 alert("Image upload failed");
@@ -38,15 +33,12 @@ export default function CreatePost() {
                 return;
             }
 
-
             const { data } = supabase.storage
                 .from("post-images")
                 .getPublicUrl(fileName);
 
-
             finalImageUrl = data.publicUrl;
         }
-
 
         const { error } = await supabase.from("posts").insert([
             {
@@ -58,39 +50,32 @@ export default function CreatePost() {
             },
         ]);
 
-
         setUploading(false);
-
 
         if (error) {
             alert("Failed to create post");
             return;
         }
 
-
         navigate("/");
     };
-
 
     return (
         <div style={container}>
             <form onSubmit={handleSubmit} style={formStyle}>
                 <h1 style={titleStyle}>Create Post</h1>
-
                 <label style={label}>Title</label>
                 <input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     style={inputStyle}
                 />
-
                 <label style={label}>Content (Optional)</label>
                 <textarea
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     style={{ ...inputStyle, height: "150px" }}
                 />
-
                 <label style={label}>Image URL (Option 1)</label>
                 <input
                     value={imageUrl}
@@ -101,7 +86,6 @@ export default function CreatePost() {
                     placeholder="Paste image link here"
                     style={inputStyle}
                 />
-
                 <label style={label}>Upload Image (Option 2)</label>
                 <div
                     onDrop={(e) => {

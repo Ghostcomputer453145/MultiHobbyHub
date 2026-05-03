@@ -95,9 +95,6 @@ export default function CommentSection({ postId }) {
         const userId = userData?.user?.id;
         if (!userId) return;
 
-        const comment = comments.find(c => c.id === commentId);
-        if (!comment) return;
-
         const field = type === "up" ? "upvotes" : "downvotes";
 
         const { data: existing } = await supabase
@@ -107,6 +104,14 @@ export default function CommentSection({ postId }) {
             .eq("comment_id", commentId)
             .single();
 
+        const { data: freshComment } = await supabase
+            .from("comments")
+            .select("upvotes, downvotes")
+            .eq("id", commentId)
+            .single();
+
+        if (!freshComment) return;
+
         if (existing) {
             if (existing.type === type) return;
 
@@ -115,8 +120,8 @@ export default function CommentSection({ postId }) {
             await supabase
                 .from("comments")
                 .update({
-                    [oldField]: Math.max((comment[oldField] || 1) - 1, 0),
-                    [field]: (comment[field] || 0) + 1,
+                    [oldField]: Math.max((freshComment[oldField] || 0) - 1, 0),
+                    [field]: (freshComment[field] || 0) + 1,
                 })
                 .eq("id", commentId);
 
@@ -137,7 +142,9 @@ export default function CommentSection({ postId }) {
 
         await supabase
             .from("comments")
-            .update({ [field]: (comment[field] || 0) + 1 })
+            .update({
+                [field]: (freshComment[field] || 0) + 1
+            })
             .eq("id", commentId);
 
         fetchComments();
@@ -164,16 +171,16 @@ export default function CommentSection({ postId }) {
                             <button style={btn} onClick={() => vote(c.id, "up")}> 👍 {c.upvotes || 0} upvotes </button>
                             <button style={btn} onClick={() => vote(c.id, "down")}> 👎 {c.downvotes || 0} downvotes </button>
                             <button style={btn} onClick={() => setReplyBox(c.id)}> 💬 Reply </button>
-
-                            {isOwner && (
-                                <button style={btn} onClick={() => deleteComment(c.id)}> 🗑 Delete </button>
-                            )}
+                            {isOwner && ( <button style={btn} onClick={() => deleteComment(c.id)}> 🗑 Delete </button> )}
                         </div>
 
                         <button
                             style={btn}
                             onClick={() =>
-                                setCollapsed(prev => ({ ...prev, [c.id]: !prev[c.id] }))
+                                setCollapsed(prev => ({
+                                    ...prev,
+                                    [c.id]: !prev[c.id]
+                                }))
                             }
                         >
                             {collapsed[c.id] ? "▶ Expand" : "▼ Collapse"}

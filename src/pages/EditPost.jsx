@@ -12,7 +12,7 @@ export default function EditPost() {
     const [file, setFile] = useState(null);
     const [loading, setLoading] = useState(false);
     const [videoUrl, setVideoUrl] = useState("");
-    const [flag, setFlag] = useState(""); // ✅ NEW: post type
+    const [flag, setFlag] = useState(""); 
 
     useEffect(() => {
         loadPost();
@@ -34,7 +34,7 @@ export default function EditPost() {
         setContent(data.content || "");
         setImageUrl(data.image_url || "");
         setVideoUrl(data.video_url || "");
-        setFlag(data.flag || ""); // ✅ NEW
+        setFlag(data.flag || "");
     };
 
     const updatePost = async (e) => {
@@ -84,7 +84,7 @@ export default function EditPost() {
                 content,
                 image_url: finalImageUrl,
                 video_url: videoUrl,
-                flag // ✅ NEW: update post type
+                flag
             })
             .eq("id", id);
 
@@ -113,7 +113,6 @@ export default function EditPost() {
                     style={{ ...input, height: "150px" }}
                 />
 
-                {/* ✅ NEW: Post Type */}
                 <label style={label}>Post Type</label>
                 <select value={flag} onChange={(e) => setFlag(e.target.value)} style={input}>
                     <option value="">None</option>

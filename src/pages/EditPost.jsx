@@ -5,7 +5,6 @@ import { useParams, useNavigate } from "react-router-dom";
 export default function EditPost() {
     const { id } = useParams();
     const navigate = useNavigate();
-
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [imageUrl, setImageUrl] = useState("");
@@ -139,7 +138,16 @@ export default function EditPost() {
                         setImageUrl("");
                     }}
                     onDragOver={(e) => e.preventDefault()}
-                    style={dropBox}
+                    style={{
+                        border: "2px dashed black",
+                        padding: "20px",
+                        borderRadius: "15px",
+                        marginBottom: "15px",
+                        backgroundColor: "white",
+                        color: "black",
+                        textAlign: "center",
+                        cursor: "pointer"
+                    }}
                 >
                     Drag & Drop Image Here OR Click Below
                 </div>

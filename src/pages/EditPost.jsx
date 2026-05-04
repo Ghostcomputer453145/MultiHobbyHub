@@ -243,3 +243,9 @@ const fancyBtn = {
     fontSize: "25px",
     WebkitTextStroke: "1px black",
 };
+
+const preview = {
+    width: "100%",
+    borderRadius: "10px",
+    marginTop: "10px",
+};

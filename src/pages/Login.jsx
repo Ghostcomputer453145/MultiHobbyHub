@@ -40,7 +40,7 @@ export default function Login({ setUser }) {
         }
 
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: "http://localhost:5173/update-password",
+            redirectTo: "https://marvelous-frangollo-9e37c9.netlify.app/update-password",
         });
 
         if (error) alert(error.message);

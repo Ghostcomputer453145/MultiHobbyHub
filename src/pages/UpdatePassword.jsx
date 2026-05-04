@@ -1,10 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../utils/supabaseClient";
 import { useNavigate } from "react-router-dom";
 
 export default function UpdatePassword() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const getSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      console.log("Session:", data);
+
+      if (!data.session) {
+        alert("Invalid or expired reset link. Try again.");
+        navigate("/login");
+      }
+    };
+
+    getSession();
+  }, []);
+
   const updatePassword = async () => {
     const { error } = await supabase.auth.updateUser({
       password: password
@@ -35,7 +50,6 @@ export default function UpdatePassword() {
     </div>
   );
 }
-
 
 const container = {
   display: "flex",
